@@ -1,0 +1,35 @@
+diff --git a/src/core/hts_engine_call.cpp b/src/core/hts_engine_call.cpp
+index a6fcb3f..1a651e5 100644
+--- a/src/core/hts_engine_call.cpp
++++ b/src/core/hts_engine_call.cpp
+@@ -60,6 +60,8 @@ namespace RHVoice
+           s=std::max<sample_type>(-32768,std::min<sample_type>(32767,s));
+           samples.push_back(static_cast<short>(s));
+         }
++      if(samples.empty())
++        return;
+       bool should_continue=player->play_speech(&samples[0],samples.size());
+       if(!should_continue)
+         stop();
+@@ -205,6 +207,8 @@ namespace RHVoice
+   void rate_controller::on_input()
+   {
+     samples.assign(input.begin(),input.end());
++    if(samples.empty())
++      return;
+     if(sonicWriteFloatToStream(stream,&samples[0],samples.size())==0)
+       throw std::bad_alloc();
+   }
+diff --git a/src/core/str_hts_engine_impl.cpp b/src/core/str_hts_engine_impl.cpp
+index 3240baa..b1f5136 100644
+--- a/src/core/str_hts_engine_impl.cpp
++++ b/src/core/str_hts_engine_impl.cpp
+@@ -27,7 +27,7 @@
+ 
+ extern "C"
+ {
+-  void HTS_Audio_initialize(HTS_Audio * audio, int sampling_rate, int max_buff_size)
++  void HTS_Audio_initialize(HTS_Audio * audio)
+   {
+   }
+ 

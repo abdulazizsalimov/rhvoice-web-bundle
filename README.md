@@ -124,6 +124,7 @@ Each variant produces its own self-contained bundle and zip archive with a varia
 
 - bootstraps `emsdk` if needed
 - clones or updates `RHVoice` if needed
+- applies the repository's managed RHVoice vendor patches automatically
 - builds `rhvoice_core.wasm`
 - builds the browser SDK
 - downloads only the configured language and voice packages from `rhvoice.config.json`
