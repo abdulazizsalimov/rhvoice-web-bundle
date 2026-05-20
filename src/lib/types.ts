@@ -49,6 +49,12 @@ export interface Registry {
 
 export type RhvoicePreloadPolicy = "on-demand" | "all-at-init";
 
+export interface RhvoiceDefaultSynthOptions {
+  rate?: number;
+  pitch?: number;
+  volume?: number;
+}
+
 export interface RhvoiceWebConfig {
   version: number;
   generatedAt: string;
@@ -58,6 +64,7 @@ export interface RhvoiceWebConfig {
   fallbackVoice: string;
   preloadPolicy: RhvoicePreloadPolicy;
   preloadVoices: string[];
+  defaultSynthOptions?: RhvoiceDefaultSynthOptions;
 }
 
 export interface InstalledPackage {
@@ -97,13 +104,10 @@ export interface SynthRequest {
   messageType?: number;
 }
 
-export interface RhvoiceWebSynthRequest {
+export interface RhvoiceWebSynthRequest extends RhvoiceDefaultSynthOptions {
   text: string;
   locale?: string;
   voiceId?: string;
-  rate?: number;
-  pitch?: number;
-  volume?: number;
   messageType?: number;
 }
 

@@ -16,6 +16,11 @@
   ],
   "runtime": {
     "preloadPolicy": "on-demand",
-    "preloadVoices": ["alan"]
+    "preloadVoices": ["alan"],
+    "defaultSynthOptions": {
+      "rate": 0,
+      "pitch": 0,
+      "volume": 0
+    }
   }
 }

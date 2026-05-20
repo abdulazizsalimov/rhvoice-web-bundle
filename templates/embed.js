@@ -57,6 +57,18 @@ async function speak(input) {
   return result;
 }
 
+function setDefaultSynthOptions(options) {
+  return tts.setDefaultSynthOptions(options);
+}
+
+function getDefaultSynthOptions() {
+  return tts.getDefaultSynthOptions();
+}
+
+function resetDefaultSynthOptions() {
+  return tts.resetDefaultSynthOptions();
+}
+
 function dispose() {
   if (currentAudio) {
     currentAudio.pause();
@@ -75,6 +87,11 @@ const api = {
   synthesize,
   createAudio,
   speak,
+  setDefaultSynthOptions,
+  getDefaultSynthOptions,
+  resetDefaultSynthOptions,
+  setVoiceOptions: setDefaultSynthOptions,
+  getVoiceOptions: getDefaultSynthOptions,
   ensureLocale(locale) {
     return init().then(() => tts.ensureLocale(locale));
   },

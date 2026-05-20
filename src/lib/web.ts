@@ -3,6 +3,7 @@ import { RhvoiceBrowserSdk } from "./sdk";
 import type { RhvoiceBrowserSdkOptions } from "./sdk";
 import type {
   CatalogVoiceEntry,
+  RhvoiceDefaultSynthOptions,
   RhvoiceSnapshot,
   RhvoiceWebConfig,
   RhvoiceWebSynthRequest,
@@ -23,11 +24,32 @@ function unique(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
+function clampSynthValue(value: number): number {
+  return Math.max(-1, Math.min(1, value));
+}
+
+function normalizeSynthOptions(options: RhvoiceDefaultSynthOptions | undefined): RhvoiceDefaultSynthOptions {
+  if (!options) {
+    return {};
+  }
+
+  const normalized: RhvoiceDefaultSynthOptions = {};
+  for (const key of ["rate", "pitch", "volume"] as const) {
+    const value = options[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      normalized[key] = clampSynthValue(value);
+    }
+  }
+  return normalized;
+}
+
 export class RhvoiceWebTts {
   private readonly sdk: RhvoiceBrowserSdk;
   private config: RhvoiceWebConfig | null = null;
   private readonly configUrl?: string;
   private readonly inlineConfig?: RhvoiceWebConfig;
+  private configDefaultSynthOptions: RhvoiceDefaultSynthOptions = {};
+  private runtimeDefaultSynthOptions: RhvoiceDefaultSynthOptions = {};
 
   constructor(options: RhvoiceWebTtsOptions = {}) {
     this.configUrl = options.configUrl;
@@ -37,6 +59,7 @@ export class RhvoiceWebTts {
 
   async init(): Promise<RhvoiceSnapshot> {
     this.config = this.inlineConfig ?? (await loadWebConfig(this.configUrl ?? defaultWebConfigUrl()));
+    this.configDefaultSynthOptions = normalizeSynthOptions(this.config.defaultSynthOptions);
     const snapshot = await this.sdk.init({ registryUrl: this.config.registryUrl });
     await this.preloadConfiguredVoices();
     return this.requireSnapshot(snapshot);
@@ -48,6 +71,31 @@ export class RhvoiceWebTts {
 
   getSnapshot(): RhvoiceSnapshot | null {
     return this.sdk.getSnapshot();
+  }
+
+  getDefaultSynthOptions(): RhvoiceDefaultSynthOptions {
+    return { ...this.resolveDefaultSynthOptions() };
+  }
+
+  getVoiceOptions(): RhvoiceDefaultSynthOptions {
+    return this.getDefaultSynthOptions();
+  }
+
+  setDefaultSynthOptions(options: RhvoiceDefaultSynthOptions = {}): RhvoiceDefaultSynthOptions {
+    this.runtimeDefaultSynthOptions = {
+      ...this.runtimeDefaultSynthOptions,
+      ...normalizeSynthOptions(options),
+    };
+    return this.getDefaultSynthOptions();
+  }
+
+  setVoiceOptions(options: RhvoiceDefaultSynthOptions = {}): RhvoiceDefaultSynthOptions {
+    return this.setDefaultSynthOptions(options);
+  }
+
+  resetDefaultSynthOptions(): RhvoiceDefaultSynthOptions {
+    this.runtimeDefaultSynthOptions = {};
+    return this.getDefaultSynthOptions();
   }
 
   async installConfiguredVoices(): Promise<RhvoiceSnapshot> {
@@ -68,15 +116,16 @@ export class RhvoiceWebTts {
     const voice = request.voiceId
       ? this.findVoicePackageById(request.voiceId)
       : this.resolveVoicePackageForLocale(request.locale ?? "");
+    const synthOptions = this.resolveSynthOptions(request);
 
     await this.ensureVoiceInstalled(voice.id);
 
     return this.sdk.synthesize({
       text: request.text,
       voice: voice.name,
-      rate: request.rate,
-      pitch: request.pitch,
-      volume: request.volume,
+      rate: synthOptions.rate,
+      pitch: synthOptions.pitch,
+      volume: synthOptions.volume,
       messageType: request.messageType,
     });
   }
@@ -99,6 +148,20 @@ export class RhvoiceWebTts {
     const config = this.requireConfig();
     const localeVoiceIds = Object.values(config.defaultVoiceByLocale);
     return unique([...localeVoiceIds, ...config.preloadVoices, config.fallbackVoice]);
+  }
+
+  private resolveDefaultSynthOptions(): RhvoiceDefaultSynthOptions {
+    return {
+      ...this.configDefaultSynthOptions,
+      ...this.runtimeDefaultSynthOptions,
+    };
+  }
+
+  private resolveSynthOptions(request: RhvoiceWebSynthRequest): RhvoiceDefaultSynthOptions {
+    return {
+      ...this.resolveDefaultSynthOptions(),
+      ...normalizeSynthOptions(request),
+    };
   }
 
   private async ensureVoiceInstalled(voiceId: string): Promise<void> {

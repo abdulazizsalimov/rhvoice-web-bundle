@@ -40,6 +40,25 @@ function unique(values) {
   return Array.from(new Set(values));
 }
 
+function clampSynthValue(value) {
+  return Math.max(-1, Math.min(1, value));
+}
+
+function normalizeDefaultSynthOptions(options) {
+  if (!options || typeof options !== "object") {
+    return {};
+  }
+
+  const normalized = {};
+  for (const key of ["rate", "pitch", "volume"]) {
+    const value = options[key];
+    if (typeof value === "number" && Number.isFinite(value)) {
+      normalized[key] = clampSynthValue(value);
+    }
+  }
+  return normalized;
+}
+
 async function fetchJson(url) {
   const response = await fetch(url);
   if (!response.ok) {
@@ -187,6 +206,7 @@ const runtimeConfig = {
   fallbackVoice,
   preloadPolicy: bundleConfig.runtime?.preloadPolicy ?? "on-demand",
   preloadVoices: configuredPreloadVoices,
+  defaultSynthOptions: normalizeDefaultSynthOptions(bundleConfig.runtime?.defaultSynthOptions),
 };
 
 writeFileSync(resolve(registryDir, "packages.json"), `${JSON.stringify(registry, null, 2)}\n`);

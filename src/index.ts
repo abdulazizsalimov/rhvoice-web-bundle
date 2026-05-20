@@ -16,6 +16,7 @@ export type {
   PackageOperationPayload,
   PackageVersion,
   Registry,
+  RhvoiceDefaultSynthOptions,
   RhvoicePreloadPolicy,
   RhvoiceSnapshot,
   RhvoiceWebConfig,

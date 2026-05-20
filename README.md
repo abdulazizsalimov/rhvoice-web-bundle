@@ -57,7 +57,12 @@ Edit `rhvoice.config.json`:
   ],
   "runtime": {
     "preloadPolicy": "on-demand",
-    "preloadVoices": ["alan"]
+    "preloadVoices": ["alan"],
+    "defaultSynthOptions": {
+      "rate": 0,
+      "pitch": 0,
+      "volume": 0.1
+    }
   }
 }
 ```
@@ -71,6 +76,7 @@ Key fields:
 - `languages[].locales`: locale aliases that should resolve to that default voice
 - `runtime.preloadPolicy`: `on-demand` or `all-at-init`
 - `runtime.preloadVoices`: voices to preinstall immediately after init
+- `runtime.defaultSynthOptions`: optional default `rate`, `pitch`, and `volume` values for every synthesis request
 
 `rhvoice.config.json` is also used by `npm run dev`, `npm run smoke`, and `npm run test:e2e`.
 
@@ -185,7 +191,10 @@ await tts.init();
 
 const result = await tts.synthesize({
   text: "Hello from RHVoice.",
-  locale: document.documentElement.lang
+  locale: document.documentElement.lang,
+  rate: 0.15,
+  pitch: -0.1,
+  volume: 0.2
 });
 ```
 
@@ -197,6 +206,37 @@ const result = await tts.synthesize({
   voiceId: "alan"
 });
 ```
+
+Global defaults from `/rhvoice/config.json` are applied automatically. You can override them in runtime:
+
+```ts
+tts.setDefaultSynthOptions({
+  rate: 0.1,
+  pitch: 0,
+  volume: 0.15
+});
+```
+
+Alias methods are also available:
+
+```ts
+tts.setVoiceOptions({ rate: -0.1 });
+const current = tts.getDefaultSynthOptions();
+tts.resetDefaultSynthOptions();
+```
+
+### Speech Option Ranges
+
+`rate`, `pitch`, and `volume` use RHVoice absolute values and are clamped to `-1..1`.
+
+- `0`: neutral
+- `-1`: minimum
+- `1`: maximum
+
+Recommended starting UI range:
+
+- map a `0..100` slider to RHVoice with `value / 50 - 1`
+- keep typical adjustments small, for example `-0.25..0.25`
 
 What the runtime does:
 
@@ -220,9 +260,15 @@ Add this to the page:
 </script>
 <script type="module" src="/rhvoice/embed.js"></script>
 <script type="module">
+  window.RHVoiceWeb.setDefaultSynthOptions({
+    rate: 0.1,
+    volume: 0.15
+  });
+
   await window.RHVoiceWeb.speak({
     text: "This page is using RHVoice without a bundler.",
-    locale: document.documentElement.lang
+    locale: document.documentElement.lang,
+    pitch: -0.1
   });
 </script>
 ```
@@ -234,6 +280,11 @@ Add this to the page:
 - `synthesize()`
 - `createAudio()`
 - `speak()`
+- `setDefaultSynthOptions()`
+- `getDefaultSynthOptions()`
+- `resetDefaultSynthOptions()`
+- `setVoiceOptions()`
+- `getVoiceOptions()`
 - `ensureLocale()`
 - `getConfig()`
 - `getSnapshot()`

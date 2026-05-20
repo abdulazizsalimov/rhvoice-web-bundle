@@ -43,6 +43,9 @@ const preloadSummary =
   bundleConfig.runtime?.preloadPolicy === "all-at-init"
     ? "All configured voices are preloaded at init."
     : `Voices are installed on demand. Preloaded voices: ${bundleConfig.runtime?.preloadVoices?.join(", ") || "none"}.`;
+const defaultSynthOptionsSummary = Object.keys(bundleConfig.runtime?.defaultSynthOptions ?? {}).length
+  ? `Configured default synth options: ${JSON.stringify(bundleConfig.runtime.defaultSynthOptions)}.`
+  : "No default synth options are configured in config.json.";
 
 const integrationNote = `# RHVoice Web Bundle: ${variantLabel}
 
@@ -68,7 +71,20 @@ await tts.init();
 
 const result = await tts.synthesize({
   text: "Hello from RHVoice.",
-  locale: document.documentElement.lang
+  locale: document.documentElement.lang,
+  rate: 0.15,
+  pitch: -0.1,
+  volume: 0.2
+});
+\`\`\`
+
+Global defaults from \`${deploymentPath}/config.json\` are applied automatically. You can override them in runtime:
+
+\`\`\`js
+tts.setDefaultSynthOptions({
+  rate: 0.1,
+  pitch: 0,
+  volume: 0.15
 });
 \`\`\`
 
@@ -79,16 +95,21 @@ Load \`${deploymentPath}/embed.js\` and use the global helper:
 \`\`\`html
 <script type="module" src="${deploymentPath}/embed.js"></script>
 <script type="module">
+  window.RHVoiceWeb.setDefaultSynthOptions({ rate: 0.1, volume: 0.15 });
   await window.RHVoiceWeb.speak({
     text: "Hello from RHVoice.",
-    locale: document.documentElement.lang
+    locale: document.documentElement.lang,
+    pitch: -0.1
   });
 </script>
 \`\`\`
 
+The \`rate\`, \`pitch\`, and \`volume\` values are clamped to the RHVoice absolute range \`-1..1\`. Neutral is \`0\`.
+
 ## Runtime Behavior
 
 - ${preloadSummary}
+- ${defaultSynthOptionsSummary}
 - Voices are cached in the browser after the first installation.
 - \`window.RHVoiceWeb\` is framework-agnostic and works on plain HTML pages.
 - \`RhvoiceWebTts\` from \`sdk/index.js\` works with any frontend stack that can load ES modules.
