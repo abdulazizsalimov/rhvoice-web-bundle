@@ -5,6 +5,7 @@ import { resolve } from "node:path";
 import { getArgValue, readReleaseVariants, rootDir } from "./release-utils.mjs";
 
 const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const buildAllVariants = process.argv.includes("--all-variants");
 const selectedVariantId = getArgValue("--variant");
 
 function runNpmScript(scriptName) {
@@ -33,18 +34,16 @@ for (const scriptName of ["bootstrap:emsdk", "sync:rhvoice", "build:native", "bu
   runNpmScript(scriptName);
 }
 
-const variants = readReleaseVariants(selectedVariantId);
-
-if (variants.length === 0) {
+if (!buildAllVariants && !selectedVariantId) {
   for (const scriptName of ["prepare:assets", "build:web-bundle", "bundle:archive"]) {
     runNpmScript(scriptName);
   }
 } else {
+  const variants = readReleaseVariants(selectedVariantId);
   const bundleOutputRoot = resolve(rootDir, "dist", "web-bundles");
   const releaseOutputRoot = resolve(rootDir, "dist", "releases");
 
   rmSync(bundleOutputRoot, { recursive: true, force: true });
-  rmSync(releaseOutputRoot, { recursive: true, force: true });
   mkdirSync(bundleOutputRoot, { recursive: true });
   mkdirSync(releaseOutputRoot, { recursive: true });
 

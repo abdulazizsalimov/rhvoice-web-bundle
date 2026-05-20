@@ -23,58 +23,20 @@ The runtime uses standard browser APIs only:
 ## Main Flow
 
 1. Clone the repository.
-2. Edit the release preset files in `configs/`.
-3. Edit `rhvoice.variants.json` to choose which bundles should be published.
+2. Edit `rhvoice.config.json`.
 4. Run `npm install`.
 5. Run `npm run bundle`.
-6. Take the generated bundles from `dist/web-bundles/` or the zip archives from `dist/releases/`.
-7. Copy the selected `rhvoice/` directory into your web app's static assets.
+6. Take the generated bundle from `dist/web-bundle/` or the zip archive from `dist/releases/rhvoice-web-bundle.zip`.
+7. Copy the `rhvoice/` directory into your web app's static assets.
 8. Use either:
    - `sdk/index.js` in application code
    - `embed.js` on plain HTML pages without a bundler
 
-Each generated bundle includes its own `README.md` with deployment and usage instructions.
+The classic single-config flow is the default build mode.
 
-## Release Variants
+## Single Bundle Configuration
 
-`npm run bundle` builds every preset listed in `rhvoice.variants.json`.
-
-Current examples:
-
-- `en`: English-only bundle with multiple English voices
-- `en_ru`: English and Russian bundle
-
-Example `rhvoice.variants.json`:
-
-```json
-{
-  "version": 1,
-  "variants": [
-    {
-      "id": "en",
-      "label": "English Voices",
-      "config": "configs/en.json"
-    },
-    {
-      "id": "en_ru",
-      "label": "English and Russian Voices",
-      "config": "configs/en_ru.json"
-    }
-  ]
-}
-```
-
-If you need just one archive:
-
-```bash
-npm run bundle -- --variant en
-```
-
-## Configure a Variant
-
-Each bundle preset is just a JSON file in `configs/`.
-
-Example `configs/en_ru.json`:
+Edit `rhvoice.config.json`:
 
 ```json
 {
@@ -110,19 +72,65 @@ Key fields:
 - `runtime.preloadPolicy`: `on-demand` or `all-at-init`
 - `runtime.preloadVoices`: voices to preinstall immediately after init
 
-`rhvoice.config.json` remains the default local config for `npm run dev`, `npm run smoke`, and `npm run test:e2e`.
+`rhvoice.config.json` is also used by `npm run dev`, `npm run smoke`, and `npm run test:e2e`.
+
+## Release Variants
+
+If you need several release bundles from one codebase, use optional variant presets.
+
+Files:
+
+- `configs/en.json`
+- `configs/en_ru.json`
+- `rhvoice.variants.json`
+
+Example `rhvoice.variants.json`:
+
+```json
+{
+  "version": 1,
+  "variants": [
+    {
+      "id": "en",
+      "label": "English Voices",
+      "config": "configs/en.json"
+    },
+    {
+      "id": "en_ru",
+      "label": "English and Russian Voices",
+      "config": "configs/en_ru.json"
+    }
+  ]
+}
+```
+
+Build all configured variants:
+
+```bash
+npm run bundle:variants
+```
+
+Build one variant only:
+
+```bash
+npm run bundle:variants -- --variant en
+```
+
+Each variant produces its own self-contained bundle and zip archive with a variant-specific `README.md`.
 
 ## What `npm run bundle` Does
 
-`npm run bundle` performs the full release build:
+`npm run bundle` performs the full single-bundle build:
 
 - bootstraps `emsdk` if needed
 - clones or updates `RHVoice` if needed
 - builds `rhvoice_core.wasm`
 - builds the browser SDK
-- downloads only the configured language and voice packages for each variant
-- assembles a separate web bundle for each configured variant
-- creates a zip archive for each variant
+- downloads only the configured language and voice packages from `rhvoice.config.json`
+- assembles `dist/web-bundle/`
+- creates `dist/releases/rhvoice-web-bundle.zip`
+
+`npm run bundle:variants` runs the same build pipeline for every preset listed in `rhvoice.variants.json`.
 
 The repository does not store built wasm artifacts, `dist/`, `vendor/RHVoice/`, or the downloaded toolchain in git. They are generated locally by the build scripts.
 
@@ -130,26 +138,31 @@ The repository does not store built wasm artifacts, `dist/`, `vendor/RHVoice/`, 
 
 After `npm run bundle` you get:
 
+- `dist/web-bundle/README.md`
+- `dist/web-bundle/bundle-config.json`
+- `dist/web-bundle/bundle-manifest.json`
+- `dist/web-bundle/rhvoice/config.json`
+- `dist/web-bundle/rhvoice/registry/packages.json`
+- `dist/web-bundle/rhvoice/packs/*.zip`
+- `dist/web-bundle/rhvoice/sdk/index.js`
+- `dist/web-bundle/rhvoice/sdk/worker/rhvoice.worker.js`
+- `dist/web-bundle/rhvoice/embed.js`
+- `dist/releases/rhvoice-web-bundle.zip`
+
+After `npm run bundle:variants` you get:
+
 - `dist/web-bundles/README.md`
 - `dist/web-bundles/en/README.md`
-- `dist/web-bundles/en/bundle-manifest.json`
-- `dist/web-bundles/en/rhvoice/config.json`
-- `dist/web-bundles/en/rhvoice/registry/packages.json`
-- `dist/web-bundles/en/rhvoice/packs/*.zip`
-- `dist/web-bundles/en/rhvoice/sdk/index.js`
-- `dist/web-bundles/en/rhvoice/sdk/worker/rhvoice.worker.js`
-- `dist/web-bundles/en/rhvoice/embed.js`
 - `dist/web-bundles/en_ru/README.md`
-- `dist/web-bundles/en_ru/rhvoice/...`
 - `dist/releases/rhvoice-web-bundle-en.zip`
 - `dist/releases/rhvoice-web-bundle-en_ru.zip`
 - `dist/releases/release-manifest.json`
 
-Each bundle directory and each zip archive is self-contained.
+Every bundle directory and every zip archive is self-contained.
 
 ## Deploy
 
-Choose one release bundle and copy its `rhvoice/` directory into your static assets so that `assetBasePath` matches the final URL.
+Copy the generated `rhvoice/` directory from either the single bundle or one selected variant into your static assets so that `assetBasePath` matches the final URL.
 
 If `assetBasePath` is `/rhvoice`, then these URLs should exist:
 
@@ -247,10 +260,11 @@ Main release command:
 npm run bundle
 ```
 
-Build one variant only:
+Optional multi-variant commands:
 
 ```bash
-npm run bundle -- --variant en
+npm run bundle:variants
+npm run bundle:variants -- --variant en
 ```
 
 Other commands:

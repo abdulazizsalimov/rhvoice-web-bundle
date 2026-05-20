@@ -27,6 +27,7 @@
     "build:web-bundle": "node scripts/build-web-bundle.mjs",
     "bundle:archive": "node scripts/archive-web-bundle.mjs",
     "bundle": "node scripts/bundle.mjs",
+    "bundle:variants": "node scripts/bundle.mjs --all-variants",
     "build": "npm run build:native && npm run prepare:assets && npm run build:demo && npm run build:sdk",
     "preview": "vite preview",
     "pack:sdk": "npm run build && npm pack --dry-run",
