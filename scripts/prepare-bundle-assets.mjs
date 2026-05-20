@@ -1,33 +1,15 @@
 import { createHash } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve } from "node:path";
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+import { getArgValue, normalizeBasePath, readBundleConfig, rootDir } from "./release-utils.mjs";
+
 const publicDir = resolve(rootDir, "public");
-const configPath = resolve(rootDir, "rhvoice.config.json");
 const officialPackagesBase = "https://raw.githubusercontent.com/RHVoice/packages/main/src/languages";
-
-if (!existsSync(configPath)) {
-  throw new Error("Missing rhvoice.config.json. Create the config before preparing RHVoice assets.");
-}
+const { bundleConfig } = readBundleConfig(getArgValue("--config"));
 
 function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
-}
-
-function normalizeBasePath(value) {
-  if (!value) {
-    return "/rhvoice";
-  }
-
-  const trimmed = value.trim();
-  if (!trimmed.startsWith("/")) {
-    throw new Error(`assetBasePath must start with '/'. Received: ${value}`);
-  }
-
-  const normalized = trimmed.replace(/\/+$/, "");
-  return normalized || "/rhvoice";
 }
 
 function sanitizeSegment(value) {
@@ -91,32 +73,6 @@ function toSize(filePath) {
 function assetPath(basePath, ...segments) {
   return `${basePath}/${segments.join("/")}`;
 }
-
-function assertBundleConfig(bundleConfig) {
-  if (!Array.isArray(bundleConfig.languages) || bundleConfig.languages.length === 0) {
-    throw new Error("rhvoice.config.json must define at least one language.");
-  }
-
-  const preloadPolicy = bundleConfig.runtime?.preloadPolicy;
-  if (preloadPolicy && preloadPolicy !== "on-demand" && preloadPolicy !== "all-at-init") {
-    throw new Error(`Unsupported preloadPolicy: ${preloadPolicy}`);
-  }
-
-  for (const language of bundleConfig.languages) {
-    if (!language.code) {
-      throw new Error("Each language entry must define `code`.");
-    }
-    if (!Array.isArray(language.voices) || language.voices.length === 0) {
-      throw new Error(`Language ${language.code} must define at least one voice.`);
-    }
-    if (language.defaultVoice && !language.voices.includes(language.defaultVoice)) {
-      throw new Error(`Language ${language.code} references missing defaultVoice ${language.defaultVoice}.`);
-    }
-  }
-}
-
-const bundleConfig = readJson(configPath);
-assertBundleConfig(bundleConfig);
 
 const assetBasePath = normalizeBasePath(bundleConfig.assetBasePath);
 const assetRootDir = resolve(publicDir, assetBasePath.slice(1));

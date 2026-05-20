@@ -1,19 +1,18 @@
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { dirname, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { cpSync, existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { resolve } from "node:path";
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+import { getArgValue, normalizeBasePath, readBundleConfig, rootDir } from "./release-utils.mjs";
+
 const sdkDir = resolve(rootDir, "dist", "sdk");
-const configPath = resolve(rootDir, "rhvoice.config.json");
 const embedTemplatePath = resolve(rootDir, "templates", "embed.js");
-const bundleRootDir = resolve(rootDir, "dist", "web-bundle");
+const variantId = getArgValue("--variant");
+const variantLabel = getArgValue("--label") ?? variantId ?? "Default";
+const { bundleConfig, configRef } = readBundleConfig(getArgValue("--config"));
+const bundleRootDir = variantId
+  ? resolve(rootDir, "dist", "web-bundles", variantId)
+  : resolve(rootDir, "dist", "web-bundle");
 
-if (!existsSync(configPath)) {
-  throw new Error("Missing rhvoice.config.json. Create the config before building the bundle.");
-}
-
-const bundleConfig = JSON.parse(readFileSync(configPath, "utf8"));
-const assetBasePath = (bundleConfig.assetBasePath ?? "/rhvoice").replace(/^\/+/, "").replace(/\/+$/, "");
+const assetBasePath = normalizeBasePath(bundleConfig.assetBasePath).replace(/^\/+/, "");
 const rhvoiceAssetsDir = resolve(rootDir, "public", assetBasePath);
 const bundleRhvoiceDir = resolve(bundleRootDir, assetBasePath);
 
@@ -31,37 +30,89 @@ mkdirSync(bundleRhvoiceDir, { recursive: true });
 cpSync(rhvoiceAssetsDir, bundleRhvoiceDir, { recursive: true });
 cpSync(sdkDir, resolve(bundleRhvoiceDir, "sdk"), { recursive: true });
 cpSync(embedTemplatePath, resolve(bundleRhvoiceDir, "embed.js"));
+writeFileSync(resolve(bundleRootDir, "bundle-config.json"), `${JSON.stringify(bundleConfig, null, 2)}\n`);
 
-const integrationNote = `RHVoice web bundle
+function formatLanguageSummary(language) {
+  const locales = Array.isArray(language.locales) && language.locales.length > 0 ? language.locales.join(", ") : language.code;
+  const defaultVoice = language.defaultVoice ?? language.voices[0];
+  return `- \`${language.code}\`: voices ${language.voices.map((voice) => `\`${voice}\``).join(", ")}, default \`${defaultVoice}\`, locales ${locales}`;
+}
 
-1. Copy the "${assetBasePath}" directory from this bundle into your site's static assets.
-2. Serve it at "/${assetBasePath}".
-3. Import "/${assetBasePath}/sdk/index.js" in application code or "/${assetBasePath}/embed.js" on a plain HTML page.
-4. Initialize RhvoiceWebTts or use the global RHVoiceWeb helper from embed.js.
+const deploymentPath = `/${assetBasePath}`;
+const preloadSummary =
+  bundleConfig.runtime?.preloadPolicy === "all-at-init"
+    ? "All configured voices are preloaded at init."
+    : `Voices are installed on demand. Preloaded voices: ${bundleConfig.runtime?.preloadVoices?.join(", ") || "none"}.`;
 
-Minimal example:
+const integrationNote = `# RHVoice Web Bundle: ${variantLabel}
 
-import { RhvoiceWebTts } from "/${assetBasePath}/sdk/index.js";
+This archive was generated from \`${configRef}\`.
+
+## Included Languages and Voices
+
+${bundleConfig.languages.map((language) => formatLanguageSummary(language)).join("\n")}
+
+## Deploy
+
+1. Copy the \`${assetBasePath}/\` directory from this bundle into your site's static assets.
+2. Serve it at \`${deploymentPath}\`.
+3. Keep \`${deploymentPath}/config.json\`, \`${deploymentPath}/registry/packages.json\`, and \`${deploymentPath}/packs/*.zip\` together.
+
+## Use in Application Code
+
+\`\`\`js
+import { RhvoiceWebTts } from "${deploymentPath}/sdk/index.js";
 
 const tts = new RhvoiceWebTts();
 await tts.init();
+
 const result = await tts.synthesize({
   text: "Hello from RHVoice.",
   locale: document.documentElement.lang
 });
+\`\`\`
+
+## Use on Plain HTML Pages
+
+Load \`${deploymentPath}/embed.js\` and use the global helper:
+
+\`\`\`html
+<script type="module" src="${deploymentPath}/embed.js"></script>
+<script type="module">
+  await window.RHVoiceWeb.speak({
+    text: "Hello from RHVoice.",
+    locale: document.documentElement.lang
+  });
+</script>
+\`\`\`
+
+## Runtime Behavior
+
+- ${preloadSummary}
+- Voices are cached in the browser after the first installation.
+- \`window.RHVoiceWeb\` is framework-agnostic and works on plain HTML pages.
+- \`RhvoiceWebTts\` from \`sdk/index.js\` works with any frontend stack that can load ES modules.
 `;
 
-writeFileSync(resolve(bundleRootDir, "README.txt"), integrationNote);
+writeFileSync(resolve(bundleRootDir, "README.md"), integrationNote);
 writeFileSync(
   resolve(bundleRootDir, "bundle-manifest.json"),
   `${JSON.stringify(
     {
+      variantId: variantId ?? "default",
+      variantLabel,
       assetBasePath: `/${assetBasePath}`,
-      generatedFromConfig: "rhvoice.config.json",
+      generatedFromConfig: configRef,
       sdkEntry: `/${assetBasePath}/sdk/index.js`,
       embedEntry: `/${assetBasePath}/embed.js`,
       config: `/${assetBasePath}/config.json`,
       registry: `/${assetBasePath}/registry/packages.json`,
+      languages: bundleConfig.languages.map((language) => ({
+        code: language.code,
+        voices: language.voices,
+        defaultVoice: language.defaultVoice ?? language.voices[0],
+        locales: language.locales ?? [],
+      })),
     },
     null,
     2,

@@ -6,12 +6,6 @@
       "voices": ["alan", "slt"],
       "defaultVoice": "alan",
       "locales": ["en-US", "en-GB"]
-    },
-    {
-      "code": "ru",
-      "voices": ["anna", "pavel"],
-      "defaultVoice": "anna",
-      "locales": ["ru-RU"]
     }
   ],
   "runtime": {

@@ -1,12 +1,13 @@
 import { zipSync } from "fflate";
 import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
-import { dirname, resolve, relative } from "node:path";
-import { fileURLToPath } from "node:url";
+import { resolve, relative } from "node:path";
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const sourceDir = resolve(rootDir, "dist", "web-bundle");
+import { getArgValue, rootDir } from "./release-utils.mjs";
+
+const variantId = getArgValue("--variant");
+const sourceDir = variantId ? resolve(rootDir, "dist", "web-bundles", variantId) : resolve(rootDir, "dist", "web-bundle");
 const releaseDir = resolve(rootDir, "dist", "releases");
-const outputPath = resolve(releaseDir, "rhvoice-web-bundle.zip");
+const outputPath = resolve(releaseDir, variantId ? `rhvoice-web-bundle-${variantId}.zip` : "rhvoice-web-bundle.zip");
 
 if (!existsSync(sourceDir)) {
   throw new Error("Web bundle directory is missing. Run `npm run bundle` or `npm run build:web-bundle` first.");

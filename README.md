@@ -1,6 +1,6 @@
 # RHVoice Web Bundle
 
-This repository builds a ready-to-deploy RHVoice WebAssembly bundle for the browser.
+This repository builds ready-to-deploy RHVoice WebAssembly bundles for the browser.
 
 It is framework-agnostic:
 
@@ -12,7 +12,7 @@ It is framework-agnostic:
 - Svelte
 - any other stack that can load browser JavaScript modules
 
-It does not depend on a frontend framework. The runtime uses standard browser APIs:
+The runtime uses standard browser APIs only:
 
 - ES modules
 - Web Workers
@@ -23,59 +23,79 @@ It does not depend on a frontend framework. The runtime uses standard browser AP
 ## Main Flow
 
 1. Clone the repository.
-2. Edit `rhvoice.config.json`.
-3. Run `npm install`.
-4. Run `npm run bundle`.
-5. Take the generated bundle from `dist/web-bundle/` or `dist/releases/rhvoice-web-bundle.zip`.
-6. Copy it into your web app's static assets.
-7. Use either:
+2. Edit the release preset files in `configs/`.
+3. Edit `rhvoice.variants.json` to choose which bundles should be published.
+4. Run `npm install`.
+5. Run `npm run bundle`.
+6. Take the generated bundles from `dist/web-bundles/` or the zip archives from `dist/releases/`.
+7. Copy the selected `rhvoice/` directory into your web app's static assets.
+8. Use either:
    - `sdk/index.js` in application code
    - `embed.js` on plain HTML pages without a bundler
 
-## What `npm run bundle` Does
+Each generated bundle includes its own `README.md` with deployment and usage instructions.
 
-`npm run bundle` performs the full build:
+## Release Variants
 
-- bootstraps `emsdk` if needed
-- clones or updates `RHVoice` if needed
-- downloads only the configured language and voice packages
-- builds `rhvoice_core.wasm`
-- builds the browser SDK
-- assembles the final web bundle
-- creates `dist/releases/rhvoice-web-bundle.zip`
+`npm run bundle` builds every preset listed in `rhvoice.variants.json`.
 
-The repository does not store built wasm artifacts, `dist/`, `vendor/RHVoice/`, or the downloaded toolchain in git. They are generated locally by the build scripts.
+Current examples:
 
-## Configure Voices
+- `en`: English-only bundle with multiple English voices
+- `en_ru`: English and Russian bundle
 
-Edit `rhvoice.config.json`:
+Example `rhvoice.variants.json`:
+
+```json
+{
+  "version": 1,
+  "variants": [
+    {
+      "id": "en",
+      "label": "English Voices",
+      "config": "configs/en.json"
+    },
+    {
+      "id": "en_ru",
+      "label": "English and Russian Voices",
+      "config": "configs/en_ru.json"
+    }
+  ]
+}
+```
+
+If you need just one archive:
+
+```bash
+npm run bundle -- --variant en
+```
+
+## Configure a Variant
+
+Each bundle preset is just a JSON file in `configs/`.
+
+Example `configs/en_ru.json`:
 
 ```json
 {
   "assetBasePath": "/rhvoice",
   "languages": [
     {
-      "code": "uz",
-      "voices": ["sevinch"],
-      "defaultVoice": "sevinch",
-      "locales": ["uz-UZ"]
+      "code": "en",
+      "voices": ["alan", "slt"],
+      "defaultVoice": "alan",
+      "locales": ["en-US", "en-GB"]
     },
     {
       "code": "ru",
-      "voices": ["anna"],
+      "voices": ["anna", "pavel"],
       "defaultVoice": "anna",
       "locales": ["ru-RU"]
-    },
-    {
-      "code": "en",
-      "voices": ["alan"],
-      "defaultVoice": "alan",
-      "locales": ["en-US", "en-GB"]
     }
   ],
   "runtime": {
     "preloadPolicy": "on-demand",
-    "preloadVoices": ["sevinch"]
+    "preloadVoices": ["alan"]
   }
 }
 ```
@@ -90,23 +110,46 @@ Key fields:
 - `runtime.preloadPolicy`: `on-demand` or `all-at-init`
 - `runtime.preloadVoices`: voices to preinstall immediately after init
 
+`rhvoice.config.json` remains the default local config for `npm run dev`, `npm run smoke`, and `npm run test:e2e`.
+
+## What `npm run bundle` Does
+
+`npm run bundle` performs the full release build:
+
+- bootstraps `emsdk` if needed
+- clones or updates `RHVoice` if needed
+- builds `rhvoice_core.wasm`
+- builds the browser SDK
+- downloads only the configured language and voice packages for each variant
+- assembles a separate web bundle for each configured variant
+- creates a zip archive for each variant
+
+The repository does not store built wasm artifacts, `dist/`, `vendor/RHVoice/`, or the downloaded toolchain in git. They are generated locally by the build scripts.
+
 ## Build Output
 
 After `npm run bundle` you get:
 
-- `dist/web-bundle/README.txt`
-- `dist/web-bundle/bundle-manifest.json`
-- `dist/web-bundle/rhvoice/config.json`
-- `dist/web-bundle/rhvoice/registry/packages.json`
-- `dist/web-bundle/rhvoice/packs/*.zip`
-- `dist/web-bundle/rhvoice/sdk/index.js`
-- `dist/web-bundle/rhvoice/sdk/worker/rhvoice.worker.js`
-- `dist/web-bundle/rhvoice/embed.js`
-- `dist/releases/rhvoice-web-bundle.zip`
+- `dist/web-bundles/README.md`
+- `dist/web-bundles/en/README.md`
+- `dist/web-bundles/en/bundle-manifest.json`
+- `dist/web-bundles/en/rhvoice/config.json`
+- `dist/web-bundles/en/rhvoice/registry/packages.json`
+- `dist/web-bundles/en/rhvoice/packs/*.zip`
+- `dist/web-bundles/en/rhvoice/sdk/index.js`
+- `dist/web-bundles/en/rhvoice/sdk/worker/rhvoice.worker.js`
+- `dist/web-bundles/en/rhvoice/embed.js`
+- `dist/web-bundles/en_ru/README.md`
+- `dist/web-bundles/en_ru/rhvoice/...`
+- `dist/releases/rhvoice-web-bundle-en.zip`
+- `dist/releases/rhvoice-web-bundle-en_ru.zip`
+- `dist/releases/release-manifest.json`
+
+Each bundle directory and each zip archive is self-contained.
 
 ## Deploy
 
-Copy the generated `rhvoice/` directory into your static assets so that `assetBasePath` matches the final URL.
+Choose one release bundle and copy its `rhvoice/` directory into your static assets so that `assetBasePath` matches the final URL.
 
 If `assetBasePath` is `/rhvoice`, then these URLs should exist:
 
@@ -157,18 +200,17 @@ Add this to the page:
 
 ```html
 <script>
-  window.addEventListener("rhvoice:ready", async () => {
-    await window.RHVoiceWeb.speak({
-      text: "Hello from RHVoice.",
-      locale: document.documentElement.lang
-    });
-  });
-
   window.addEventListener("rhvoice:error", (event) => {
     console.error("RHVoice failed to initialize", event.detail);
   });
 </script>
 <script type="module" src="/rhvoice/embed.js"></script>
+<script type="module">
+  await window.RHVoiceWeb.speak({
+    text: "This page is using RHVoice without a bundler.",
+    locale: document.documentElement.lang
+  });
+</script>
 ```
 
 `embed.js` exposes `window.RHVoiceWeb` with:
@@ -182,32 +224,6 @@ Add this to the page:
 - `getConfig()`
 - `getSnapshot()`
 - `dispose()`
-
-Minimal plain HTML usage:
-
-```html
-<!doctype html>
-<html lang="en">
-  <body>
-    <button id="speak">Speak</button>
-
-    <script>
-      window.addEventListener("rhvoice:error", (event) => {
-        console.error(event.detail);
-      });
-    </script>
-    <script type="module" src="/rhvoice/embed.js"></script>
-    <script type="module">
-      document.getElementById("speak").addEventListener("click", async () => {
-        await window.RHVoiceWeb.speak({
-          text: "This page is using RHVoice without a bundler.",
-          locale: document.documentElement.lang
-        });
-      });
-    </script>
-  </body>
-</html>
-```
 
 ## Is It Universal?
 
@@ -225,10 +241,16 @@ The only real requirement is a modern browser with ES modules, Web Workers, WebA
 
 ## Useful Commands
 
-Main command:
+Main release command:
 
 ```bash
 npm run bundle
+```
+
+Build one variant only:
+
+```bash
+npm run bundle -- --variant en
 ```
 
 Other commands:
@@ -236,9 +258,7 @@ Other commands:
 ```bash
 npm run smoke
 npm run build:sdk
-npm run build:web-bundle
-npm run bundle:archive
 npm run test:e2e
 ```
 
-`npm run smoke` writes a WAV file in `artifacts/` using the first configured voice.
+`npm run smoke` writes a WAV file in `artifacts/` using the first configured voice from `rhvoice.config.json`.

@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "variants": [
+    {
+      "id": "en",
+      "label": "English Voices",
+      "description": "English-only bundle with Alan and SLT.",
+      "config": "configs/en.json"
+    },
+    {
+      "id": "en_ru",
+      "label": "English and Russian Voices",
+      "description": "English and Russian bundle with Alan, SLT, Anna, and Pavel.",
+      "config": "configs/en_ru.json"
+    }
+  ]
+}
