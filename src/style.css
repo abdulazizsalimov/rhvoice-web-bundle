@@ -1,0 +1,256 @@
+:root {
+  color-scheme: light;
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 202, 111, 0.26), transparent 30%),
+    linear-gradient(135deg, #f4efe4 0%, #efe5d6 45%, #f7f2ea 100%);
+  color: #1f1b18;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}
+
+.page {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 40px 20px 48px;
+}
+
+.hero {
+  margin-bottom: 28px;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-size: 0.74rem;
+  color: #8e5b16;
+}
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  line-height: 0.95;
+  max-width: 10ch;
+}
+
+.summary {
+  max-width: 62ch;
+  color: #4f4741;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.grid {
+  display: grid;
+  gap: 18px;
+}
+
+.panel {
+  background: rgba(255, 252, 247, 0.86);
+  border: 1px solid rgba(122, 101, 72, 0.18);
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: 0 20px 40px rgba(91, 68, 35, 0.08);
+  backdrop-filter: blur(16px);
+}
+
+.panel-accent {
+  background:
+    linear-gradient(135deg, rgba(255, 228, 176, 0.52), rgba(255, 252, 247, 0.92)),
+    rgba(255, 252, 247, 0.92);
+}
+
+.panel-heading,
+.panel-actions,
+.controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.panel h2 {
+  margin: 0;
+  font-size: 1.05rem;
+}
+
+.muted {
+  color: #5d554d;
+}
+
+.chips {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #fff7ea;
+  border: 1px solid rgba(142, 91, 22, 0.18);
+  font-size: 0.92rem;
+}
+
+.catalog {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.catalog-item {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(142, 91, 22, 0.14);
+}
+
+.catalog-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.catalog-title {
+  font-weight: 600;
+}
+
+.catalog-meta {
+  color: #5d554d;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+.catalog-status {
+  color: #8e5b16;
+  font-size: 0.83rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.catalog-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.catalog-actions .button,
+.chip-action {
+  width: auto;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.field span {
+  font-size: 0.88rem;
+  color: #5f5446;
+}
+
+.field.compact {
+  min-width: 120px;
+  margin-top: 0;
+}
+
+select,
+textarea,
+input,
+.button,
+audio {
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(97, 76, 48, 0.18);
+  background: rgba(255, 255, 255, 0.82);
+  font: inherit;
+}
+
+select,
+input,
+.button {
+  min-height: 46px;
+  padding: 0 14px;
+}
+
+textarea {
+  min-height: 150px;
+  padding: 14px;
+  resize: vertical;
+}
+
+.button {
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(76, 55, 25, 0.12);
+}
+
+.button-primary {
+  background: linear-gradient(135deg, #b96a14, #e59a28);
+  border: none;
+  color: white;
+  font-weight: 600;
+}
+
+.button-secondary {
+  background: rgba(255, 255, 255, 0.82);
+  color: #533d22;
+}
+
+.button-danger,
+.chip-action {
+  background: rgba(121, 40, 20, 0.08);
+  color: #8a341b;
+  border-color: rgba(138, 52, 27, 0.18);
+}
+
+.chip-action {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  font: inherit;
+}
+
+.status-log {
+  margin: 14px 0 0;
+  min-height: 160px;
+  max-height: 320px;
+  overflow: auto;
+  padding: 14px;
+  border-radius: 16px;
+  background: #201c19;
+  color: #f9e8cb;
+  font-family: "IBM Plex Mono", "SFMono-Regular", monospace;
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+@media (min-width: 880px) {
+  .grid {
+    grid-template-columns: 1.1fr 1fr;
+  }
+
+  .grid .panel:last-child {
+    grid-column: 1 / -1;
+  }
+}

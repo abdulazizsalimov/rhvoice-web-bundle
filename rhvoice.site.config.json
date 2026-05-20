@@ -1,0 +1,27 @@
+{
+  "assetBasePath": "/rhvoice",
+  "languages": [
+    {
+      "code": "uz",
+      "voices": ["sevinch"],
+      "defaultVoice": "sevinch",
+      "locales": ["uz-UZ"]
+    },
+    {
+      "code": "ru",
+      "voices": ["anna"],
+      "defaultVoice": "anna",
+      "locales": ["ru-RU"]
+    },
+    {
+      "code": "en",
+      "voices": ["alan"],
+      "defaultVoice": "alan",
+      "locales": ["en-US", "en-GB"]
+    }
+  ],
+  "runtime": {
+    "preloadPolicy": "on-demand",
+    "preloadVoices": ["sevinch"]
+  }
+}

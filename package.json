@@ -1,0 +1,48 @@
+{
+  "name": "rhvoice-web-bundle",
+  "version": "0.1.0",
+  "description": "Browser-side RHVoice WebAssembly bundle builder with administrator-managed voice selection.",
+  "type": "module",
+  "main": "./dist/sdk/index.js",
+  "types": "./dist/sdk/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist/sdk",
+    "README.md"
+  ],
+  "scripts": {
+    "bootstrap:emsdk": "node scripts/bootstrap-emsdk.mjs",
+    "sync:rhvoice": "node scripts/sync-rhvoice.mjs",
+    "prepare:site": "node scripts/fetch-demo-packs.mjs",
+    "fetch:demo-packs": "npm run prepare:site",
+    "build:native": "node scripts/build-native.mjs",
+    "dev": "vite",
+    "build:demo": "vite build",
+    "build:sdk": "vite build -c vite.sdk.worker.config.ts && vite build -c vite.sdk.config.ts && tsc -p tsconfig.sdk.json",
+    "build:site-bundle": "node scripts/build-site-bundle.mjs",
+    "bundle:archive": "node scripts/archive-site-bundle.mjs",
+    "bundle": "node scripts/bundle.mjs",
+    "build": "npm run build:native && npm run prepare:site && npm run build:demo && npm run build:sdk",
+    "preview": "vite preview",
+    "pack:sdk": "npm run build && npm pack --dry-run",
+    "test:e2e:install": "playwright install chromium",
+    "test:e2e": "npm run build:native && npm run prepare:site && npm run build:demo && playwright test",
+    "setup": "npm run bootstrap:emsdk && npm run sync:rhvoice && npm run prepare:site && npm run build:native",
+    "smoke": "node scripts/smoke-test.mjs"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.60.0",
+    "@types/node": "^20.14.15",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.5"
+  }
+}

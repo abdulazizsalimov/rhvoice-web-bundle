@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>RHVoice Web MVP</title>
+  </head>
+  <body>
+    <div class="page">
+      <header class="hero">
+        <p class="eyebrow">RHVoice WebAssembly MVP</p>
+        <h1>Modular browser TTS with installable voice packs</h1>
+        <p class="summary">
+          The demo boots a worker-backed RHVoice wasm core, installs language and voice zip packages into persistent
+          storage, and synthesizes speech locally in the browser.
+        </p>
+      </header>
+
+      <main class="grid">
+        <section class="panel panel-accent">
+          <div class="panel-heading">
+            <h2>Packages</h2>
+          </div>
+          <div id="voice-catalog" class="catalog"></div>
+          <p id="package-summary" class="muted">Loading registry...</p>
+          <div id="installed-packages" class="chips"></div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Synthesis</h2>
+          </div>
+          <label class="field">
+            <span>Voice</span>
+            <select id="voice-select"></select>
+          </label>
+          <label class="field">
+            <span>Text</span>
+            <textarea id="text-input" rows="6">Hello from the RHVoice WebAssembly MVP. This voice is loaded from a modular package.</textarea>
+          </label>
+          <div class="controls">
+            <label class="field compact">
+              <span>Rate</span>
+              <input id="rate-input" type="number" value="0" min="-1" max="1" step="0.1" />
+            </label>
+            <label class="field compact">
+              <span>Pitch</span>
+              <input id="pitch-input" type="number" value="0" min="-1" max="1" step="0.1" />
+            </label>
+            <label class="field compact">
+              <span>Volume</span>
+              <input id="volume-input" type="number" value="0" min="-1" max="1" step="0.1" />
+            </label>
+          </div>
+          <div class="panel-actions">
+            <button id="speak-button" class="button button-primary" type="button">Synthesize</button>
+            <audio id="player" controls></audio>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <h2>Status</h2>
+          </div>
+          <pre id="status-log" class="status-log">Booting worker...</pre>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

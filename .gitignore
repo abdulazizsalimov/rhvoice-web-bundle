@@ -1,0 +1,17 @@
+.cache/
+node_modules/
+vendor/
+artifacts/
+dist/
+test-results/
+playwright-report/
+
+native/build/
+src/generated/native/
+
+public/rhvoice/
+public/packs/
+public/registry/
+
+.DS_Store
+Thumbs.db
