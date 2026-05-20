@@ -47,16 +47,16 @@ export interface Registry {
   defaultVoices: Record<string, Record<string, string>>;
 }
 
-export type SitePreloadPolicy = "on-demand" | "all-at-init";
+export type RhvoicePreloadPolicy = "on-demand" | "all-at-init";
 
-export interface RhvoiceSiteConfig {
+export interface RhvoiceWebConfig {
   version: number;
   generatedAt: string;
   assetBasePath: string;
   registryUrl: string;
   defaultVoiceByLocale: Record<string, string>;
   fallbackVoice: string;
-  preloadPolicy: SitePreloadPolicy;
+  preloadPolicy: RhvoicePreloadPolicy;
   preloadVoices: string[];
 }
 
@@ -97,7 +97,7 @@ export interface SynthRequest {
   messageType?: number;
 }
 
-export interface SiteSynthRequest {
+export interface RhvoiceWebSynthRequest {
   text: string;
   locale?: string;
   voiceId?: string;

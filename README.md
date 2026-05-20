@@ -1,26 +1,54 @@
-# RHVoice Web Bundle Builder
+# RHVoice Web Bundle
 
-This repository builds a ready-to-deploy RHVoice WebAssembly bundle for websites.
+This repository builds a ready-to-deploy RHVoice WebAssembly bundle for the browser.
 
-The target workflow is simple:
+It is framework-agnostic:
+
+- plain HTML pages
+- server-rendered sites
+- React
+- Vue
+- Angular
+- Svelte
+- any other stack that can load browser JavaScript modules
+
+It does not depend on a frontend framework. The runtime uses standard browser APIs:
+
+- ES modules
+- Web Workers
+- WebAssembly
+- IndexedDB
+- Web Audio
+
+## Main Flow
 
 1. Clone the repository.
-2. Edit `rhvoice.site.config.json`.
+2. Edit `rhvoice.config.json`.
 3. Run `npm install`.
 4. Run `npm run bundle`.
-5. Take the generated bundle from `dist/site-bundle/` or `dist/releases/rhvoice-site-bundle.zip`.
-6. Copy it into your site's static assets and import the SDK.
+5. Take the generated bundle from `dist/web-bundle/` or `dist/releases/rhvoice-web-bundle.zip`.
+6. Copy it into your web app's static assets.
+7. Use either:
+   - `sdk/index.js` in application code
+   - `embed.js` on plain HTML pages without a bundler
 
-The bundle is administrator-managed:
+## What `npm run bundle` Does
 
-- you decide which languages exist
-- you decide which voices exist
-- users do not see an install UI
-- only configured voices can be downloaded by the browser runtime
+`npm run bundle` performs the full build:
 
-## Quick Start
+- bootstraps `emsdk` if needed
+- clones or updates `RHVoice` if needed
+- downloads only the configured language and voice packages
+- builds `rhvoice_core.wasm`
+- builds the browser SDK
+- assembles the final web bundle
+- creates `dist/releases/rhvoice-web-bundle.zip`
 
-Edit `rhvoice.site.config.json`:
+The repository does not store built wasm artifacts, `dist/`, `vendor/RHVoice/`, or the downloaded toolchain in git. They are generated locally by the build scripts.
+
+## Configure Voices
+
+Edit `rhvoice.config.json`:
 
 ```json
 {
@@ -52,81 +80,50 @@ Edit `rhvoice.site.config.json`:
 }
 ```
 
-Then run:
+Key fields:
 
-```bash
-npm install
-npm run bundle
-```
-
-That one command will:
-
-- bootstrap `emsdk` if needed
-- clone or update `RHVoice`
-- fetch only the configured language and voice packages
-- build `rhvoice_core.wasm`
-- build the browser SDK
-- assemble a ready-to-deploy bundle
-- create `dist/releases/rhvoice-site-bundle.zip`
-
-## Output Artifacts
-
-After `npm run bundle` you get:
-
-- `dist/site-bundle/`
-- `dist/site-bundle/README.txt`
-- `dist/site-bundle/bundle-manifest.json`
-- `dist/site-bundle/rhvoice/`
-- `dist/releases/rhvoice-site-bundle.zip`
-
-Inside `dist/site-bundle/rhvoice/`:
-
-- `site-config.json`
-- `registry/packages.json`
-- `packs/*.zip`
-- `sdk/index.js`
-- `sdk/worker/rhvoice.worker.js`
-- `sdk/worker/assets/rhvoice_core-*.wasm`
-
-## Site Config
-
-`rhvoice.site.config.json` controls what goes into the final bundle.
-
-Fields:
-
-- `assetBasePath`: where the bundle will live on the target site, for example `/rhvoice`
-- `languages[].code`: RHVoice language code, for example `uz`, `ru`, `en`
-- `languages[].voices`: allowed voice ids for that language
+- `assetBasePath`: where the bundle will be served, for example `/rhvoice`
+- `languages[].code`: official RHVoice language code
+- `languages[].voices`: voice allowlist for that language
 - `languages[].defaultVoice`: default voice for locale mapping
 - `languages[].locales`: locale aliases that should resolve to that default voice
 - `runtime.preloadPolicy`: `on-demand` or `all-at-init`
-- `runtime.preloadVoices`: voices to install immediately after `init()`
+- `runtime.preloadVoices`: voices to preinstall immediately after init
 
-Behavior:
+## Build Output
 
-- `on-demand`: voices are downloaded only when first used
-- `all-at-init`: all configured default voices are installed during startup
+After `npm run bundle` you get:
+
+- `dist/web-bundle/README.txt`
+- `dist/web-bundle/bundle-manifest.json`
+- `dist/web-bundle/rhvoice/config.json`
+- `dist/web-bundle/rhvoice/registry/packages.json`
+- `dist/web-bundle/rhvoice/packs/*.zip`
+- `dist/web-bundle/rhvoice/sdk/index.js`
+- `dist/web-bundle/rhvoice/sdk/worker/rhvoice.worker.js`
+- `dist/web-bundle/rhvoice/embed.js`
+- `dist/releases/rhvoice-web-bundle.zip`
 
 ## Deploy
 
-Copy the bundle directory into your site's static assets so that `assetBasePath` is respected.
+Copy the generated `rhvoice/` directory into your static assets so that `assetBasePath` matches the final URL.
 
-If `assetBasePath` is `/rhvoice`, then these URLs should exist on the site:
+If `assetBasePath` is `/rhvoice`, then these URLs should exist:
 
-- `/rhvoice/site-config.json`
+- `/rhvoice/config.json`
 - `/rhvoice/registry/packages.json`
 - `/rhvoice/sdk/index.js`
 - `/rhvoice/sdk/worker/rhvoice.worker.js`
+- `/rhvoice/embed.js`
 
-## Integrate
+## Use in App Code
 
-Use the high-level runtime:
+For application code, import the high-level runtime:
 
 ```ts
-import { RhvoiceSiteTts } from "/rhvoice/sdk/index.js";
+import { RhvoiceWebTts } from "/rhvoice/sdk/index.js";
 
-const tts = new RhvoiceSiteTts();
-
+const tts = new RhvoiceWebTts();
 await tts.init();
 
 const result = await tts.synthesize({
@@ -135,7 +132,7 @@ const result = await tts.synthesize({
 });
 ```
 
-You can also force a voice id:
+You can also force a configured voice:
 
 ```ts
 const result = await tts.synthesize({
@@ -144,13 +141,87 @@ const result = await tts.synthesize({
 });
 ```
 
-The runtime will:
+What the runtime does:
 
-- load `site-config.json`
-- load the generated registry
-- resolve a configured voice from `locale`
-- install that voice automatically if it is not cached yet
-- synthesize speech with RHVoice
+- loads `/rhvoice/config.json`
+- loads the generated registry
+- resolves a configured voice from `locale`
+- installs that voice automatically if it is not cached yet
+- synthesizes speech with RHVoice
+
+## Use on Plain HTML Pages
+
+If you do not have a bundler, use `embed.js`.
+
+Add this to the page:
+
+```html
+<script>
+  window.addEventListener("rhvoice:ready", async () => {
+    await window.RHVoiceWeb.speak({
+      text: "Hello from RHVoice.",
+      locale: document.documentElement.lang
+    });
+  });
+
+  window.addEventListener("rhvoice:error", (event) => {
+    console.error("RHVoice failed to initialize", event.detail);
+  });
+</script>
+<script type="module" src="/rhvoice/embed.js"></script>
+```
+
+`embed.js` exposes `window.RHVoiceWeb` with:
+
+- `ready`
+- `init()`
+- `synthesize()`
+- `createAudio()`
+- `speak()`
+- `ensureLocale()`
+- `getConfig()`
+- `getSnapshot()`
+- `dispose()`
+
+Minimal plain HTML usage:
+
+```html
+<!doctype html>
+<html lang="en">
+  <body>
+    <button id="speak">Speak</button>
+
+    <script>
+      window.addEventListener("rhvoice:error", (event) => {
+        console.error(event.detail);
+      });
+    </script>
+    <script type="module" src="/rhvoice/embed.js"></script>
+    <script type="module">
+      document.getElementById("speak").addEventListener("click", async () => {
+        await window.RHVoiceWeb.speak({
+          text: "This page is using RHVoice without a bundler.",
+          locale: document.documentElement.lang
+        });
+      });
+    </script>
+  </body>
+</html>
+```
+
+## Is It Universal?
+
+Yes, for modern web stacks.
+
+It is not tied to any framework. The bundle is just browser JavaScript plus wasm assets.
+
+That means:
+
+- plain HTML pages can use `embed.js`
+- application code can use `sdk/index.js`
+- any framework can wrap the runtime however it wants
+
+The only real requirement is a modern browser with ES modules, Web Workers, WebAssembly, and IndexedDB support.
 
 ## Useful Commands
 
@@ -165,15 +236,9 @@ Other commands:
 ```bash
 npm run smoke
 npm run build:sdk
-npm run build:site-bundle
+npm run build:web-bundle
 npm run bundle:archive
 npm run test:e2e
 ```
 
 `npm run smoke` writes a WAV file in `artifacts/` using the first configured voice.
-
-## Notes
-
-- `RHVoice` sources are fetched automatically by `npm run bundle`.
-- `emsdk` is fetched automatically by `npm run bundle`.
-- The repository still contains a demo page and Playwright coverage for development, but the production path is the generated site bundle plus `RhvoiceSiteTts`.

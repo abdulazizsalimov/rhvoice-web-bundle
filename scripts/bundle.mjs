@@ -19,10 +19,10 @@ function runNpmScript(scriptName) {
 for (const scriptName of [
   "bootstrap:emsdk",
   "sync:rhvoice",
-  "prepare:site",
+  "prepare:assets",
   "build:native",
   "build:sdk",
-  "build:site-bundle",
+  "build:web-bundle",
   "bundle:archive",
 ]) {
   runNpmScript(scriptName);

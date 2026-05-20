@@ -1,8 +1,8 @@
 export { createDefaultRhvoiceWorker, resolveDefaultRhvoiceWorkerUrl, RhvoiceBrowserSdk } from "./lib/sdk";
 export type { RhvoiceBrowserSdkOptions, RhvoiceSnapshotListener } from "./lib/sdk";
-export { defaultSiteConfigUrl, loadSiteConfig } from "./lib/site-config";
-export { RhvoiceSiteTts } from "./lib/site";
-export type { RhvoiceSiteTtsOptions } from "./lib/site";
+export { defaultWebConfigUrl, loadWebConfig } from "./lib/web-config";
+export { RhvoiceWebTts } from "./lib/web";
+export type { RhvoiceWebTtsOptions } from "./lib/web";
 export { synthResultToWav } from "./lib/audio";
 export type {
   CatalogVoiceEntry,
@@ -16,10 +16,10 @@ export type {
   PackageOperationPayload,
   PackageVersion,
   Registry,
-  RhvoiceSiteConfig,
+  RhvoicePreloadPolicy,
   RhvoiceSnapshot,
-  SitePreloadPolicy,
-  SiteSynthRequest,
+  RhvoiceWebConfig,
+  RhvoiceWebSynthRequest,
   SynthRequest,
   SynthResult,
   VoiceInfo,

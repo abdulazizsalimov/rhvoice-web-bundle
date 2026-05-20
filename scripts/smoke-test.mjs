@@ -10,7 +10,7 @@ const registryPath = resolve(rootDir, "public", "rhvoice", "registry", "packages
 const artifactsDir = resolve(rootDir, "artifacts");
 
 if (!existsSync(registryPath)) {
-  throw new Error("Registry is missing. Run `npm run bundle` first, or prepare site assets before running smoke.");
+  throw new Error("Registry is missing. Run `npm run bundle` first, or prepare bundle assets before running smoke.");
 }
 
 const registry = JSON.parse(readFileSync(registryPath, "utf8"));

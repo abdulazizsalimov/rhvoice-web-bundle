@@ -4,12 +4,12 @@ import { dirname, resolve, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const sourceDir = resolve(rootDir, "dist", "site-bundle");
+const sourceDir = resolve(rootDir, "dist", "web-bundle");
 const releaseDir = resolve(rootDir, "dist", "releases");
-const outputPath = resolve(releaseDir, "rhvoice-site-bundle.zip");
+const outputPath = resolve(releaseDir, "rhvoice-web-bundle.zip");
 
 if (!existsSync(sourceDir)) {
-  throw new Error("Site bundle directory is missing. Run `npm run bundle` or `npm run build:site-bundle` first.");
+  throw new Error("Web bundle directory is missing. Run `npm run bundle` or `npm run build:web-bundle` first.");
 }
 
 function collectFiles(baseDir, currentDir = baseDir, result = {}) {

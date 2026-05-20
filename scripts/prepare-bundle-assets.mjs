@@ -5,11 +5,11 @@ import { fileURLToPath } from "node:url";
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = resolve(rootDir, "public");
-const configPath = resolve(rootDir, "rhvoice.site.config.json");
+const configPath = resolve(rootDir, "rhvoice.config.json");
 const officialPackagesBase = "https://raw.githubusercontent.com/RHVoice/packages/main/src/languages";
 
 if (!existsSync(configPath)) {
-  throw new Error("Missing rhvoice.site.config.json. Create the site config before preparing RHVoice assets.");
+  throw new Error("Missing rhvoice.config.json. Create the config before preparing RHVoice assets.");
 }
 
 function readJson(path) {
@@ -92,17 +92,17 @@ function assetPath(basePath, ...segments) {
   return `${basePath}/${segments.join("/")}`;
 }
 
-function assertSiteConfig(siteConfig) {
-  if (!Array.isArray(siteConfig.languages) || siteConfig.languages.length === 0) {
-    throw new Error("rhvoice.site.config.json must define at least one language.");
+function assertBundleConfig(bundleConfig) {
+  if (!Array.isArray(bundleConfig.languages) || bundleConfig.languages.length === 0) {
+    throw new Error("rhvoice.config.json must define at least one language.");
   }
 
-  const preloadPolicy = siteConfig.runtime?.preloadPolicy;
+  const preloadPolicy = bundleConfig.runtime?.preloadPolicy;
   if (preloadPolicy && preloadPolicy !== "on-demand" && preloadPolicy !== "all-at-init") {
     throw new Error(`Unsupported preloadPolicy: ${preloadPolicy}`);
   }
 
-  for (const language of siteConfig.languages) {
+  for (const language of bundleConfig.languages) {
     if (!language.code) {
       throw new Error("Each language entry must define `code`.");
     }
@@ -115,10 +115,10 @@ function assertSiteConfig(siteConfig) {
   }
 }
 
-const siteConfig = readJson(configPath);
-assertSiteConfig(siteConfig);
+const bundleConfig = readJson(configPath);
+assertBundleConfig(bundleConfig);
 
-const assetBasePath = normalizeBasePath(siteConfig.assetBasePath);
+const assetBasePath = normalizeBasePath(bundleConfig.assetBasePath);
 const assetRootDir = resolve(publicDir, assetBasePath.slice(1));
 const packsDir = resolve(assetRootDir, "packs");
 const registryDir = resolve(assetRootDir, "registry");
@@ -194,7 +194,7 @@ async function buildLanguage(languageSelection) {
   };
 }
 
-const languages = await Promise.all(siteConfig.languages.map((selection) => buildLanguage(selection)));
+const languages = await Promise.all(bundleConfig.languages.map((selection) => buildLanguage(selection)));
 
 const generatedAt = new Date().toISOString();
 const registry = {
@@ -209,7 +209,7 @@ const registry = {
 
 const localeVoiceEntries = languages.flatMap(({ locales, defaultVoice }) => locales.map((locale) => [locale, defaultVoice]));
 const allowedVoiceIds = new Set(languages.flatMap(({ registryEntry }) => registryEntry.voices.map((voice) => voice.id)));
-const configuredPreloadVoices = unique(siteConfig.runtime?.preloadVoices ?? []);
+const configuredPreloadVoices = unique(bundleConfig.runtime?.preloadVoices ?? []);
 
 for (const voiceId of configuredPreloadVoices) {
   if (!allowedVoiceIds.has(voiceId)) {
@@ -217,7 +217,7 @@ for (const voiceId of configuredPreloadVoices) {
   }
 }
 
-const fallbackVoice = siteConfig.runtime?.fallbackVoice ?? languages[0]?.defaultVoice;
+const fallbackVoice = bundleConfig.runtime?.fallbackVoice ?? languages[0]?.defaultVoice;
 if (!allowedVoiceIds.has(fallbackVoice)) {
   throw new Error(`Configured fallback voice ${fallbackVoice} is not part of the selected language set.`);
 }
@@ -229,9 +229,9 @@ const runtimeConfig = {
   registryUrl: assetPath(assetBasePath, "registry", "packages.json"),
   defaultVoiceByLocale: Object.fromEntries(localeVoiceEntries),
   fallbackVoice,
-  preloadPolicy: siteConfig.runtime?.preloadPolicy ?? "on-demand",
+  preloadPolicy: bundleConfig.runtime?.preloadPolicy ?? "on-demand",
   preloadVoices: configuredPreloadVoices,
 };
 
 writeFileSync(resolve(registryDir, "packages.json"), `${JSON.stringify(registry, null, 2)}\n`);
-writeFileSync(resolve(assetRootDir, "site-config.json"), `${JSON.stringify(runtimeConfig, null, 2)}\n`);
+writeFileSync(resolve(assetRootDir, "config.json"), `${JSON.stringify(runtimeConfig, null, 2)}\n`);

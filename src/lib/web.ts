@@ -1,17 +1,17 @@
+import { loadWebConfig, defaultWebConfigUrl } from "./web-config";
 import { RhvoiceBrowserSdk } from "./sdk";
-import { defaultSiteConfigUrl, loadSiteConfig } from "./site-config";
 import type { RhvoiceBrowserSdkOptions } from "./sdk";
 import type {
   CatalogVoiceEntry,
-  RhvoiceSiteConfig,
   RhvoiceSnapshot,
-  SiteSynthRequest,
+  RhvoiceWebConfig,
+  RhvoiceWebSynthRequest,
   SynthResult,
   VoicePackage,
 } from "./types";
 
-export interface RhvoiceSiteTtsOptions extends RhvoiceBrowserSdkOptions {
-  config?: RhvoiceSiteConfig;
+export interface RhvoiceWebTtsOptions extends RhvoiceBrowserSdkOptions {
+  config?: RhvoiceWebConfig;
   configUrl?: string;
 }
 
@@ -23,26 +23,26 @@ function unique(values: string[]): string[] {
   return Array.from(new Set(values));
 }
 
-export class RhvoiceSiteTts {
+export class RhvoiceWebTts {
   private readonly sdk: RhvoiceBrowserSdk;
-  private config: RhvoiceSiteConfig | null = null;
+  private config: RhvoiceWebConfig | null = null;
   private readonly configUrl?: string;
-  private readonly inlineConfig?: RhvoiceSiteConfig;
+  private readonly inlineConfig?: RhvoiceWebConfig;
 
-  constructor(options: RhvoiceSiteTtsOptions = {}) {
+  constructor(options: RhvoiceWebTtsOptions = {}) {
     this.configUrl = options.configUrl;
     this.inlineConfig = options.config;
     this.sdk = new RhvoiceBrowserSdk(options);
   }
 
   async init(): Promise<RhvoiceSnapshot> {
-    this.config = this.inlineConfig ?? (await loadSiteConfig(this.configUrl ?? defaultSiteConfigUrl()));
+    this.config = this.inlineConfig ?? (await loadWebConfig(this.configUrl ?? defaultWebConfigUrl()));
     const snapshot = await this.sdk.init({ registryUrl: this.config.registryUrl });
     await this.preloadConfiguredVoices();
     return this.requireSnapshot(snapshot);
   }
 
-  getConfig(): RhvoiceSiteConfig | null {
+  getConfig(): RhvoiceWebConfig | null {
     return this.config;
   }
 
@@ -64,7 +64,7 @@ export class RhvoiceSiteTts {
     return voice;
   }
 
-  async synthesize(request: SiteSynthRequest): Promise<SynthResult> {
+  async synthesize(request: RhvoiceWebSynthRequest): Promise<SynthResult> {
     const voice = request.voiceId
       ? this.findVoicePackageById(request.voiceId)
       : this.resolveVoicePackageForLocale(request.locale ?? "");
@@ -134,9 +134,9 @@ export class RhvoiceSiteTts {
     return snapshot.registry.languages.flatMap((language) => language.voices.map((voice) => ({ language, voice })));
   }
 
-  private requireConfig(): RhvoiceSiteConfig {
+  private requireConfig(): RhvoiceWebConfig {
     if (!this.config) {
-      throw new Error("RHVoice site runtime is not initialized. Call init() first.");
+      throw new Error("RHVoice web runtime is not initialized. Call init() first.");
     }
     return this.config;
   }
